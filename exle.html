@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Excel to TXT Converter</title>
+    </head>
+
+    <body>
+        <input type="file" id="upload" accept=".xlsx" />
+        <button onclick="convertToTxt()">Convert to TXT</button>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+        <script>
+            function convertToTxt() {
+                const input = document.getElementById("upload");
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    const data = event.target.result;
+                    const workbook = XLSX.read(data, {
+                        type: "binary",
+                    });
+
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    let results = [];
+
+                    for (let column in json[0]) {
+                        let shelf = column;
+                        for (let row of json) {
+                            let book = row[column];
+                            if (book) {
+                                results.push(
+                                    `{ book: "${book}", shelf: "${shelf}" }`
+                                );
+                            }
+                        }
+                    }
+
+                    const blob = new Blob([results.join(",\n")], {
+                        type: "text/plain;charset=utf-8;",
+                    });
+                    const a = document.createElement("a");
+                    const url = URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = "books.txt";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+
+                reader.readAsBinaryString(input.files[0]);
+            }
+        </script>
+    </body>
+</html>
